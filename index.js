@@ -1,6 +1,6 @@
 import express from 'express'
 import 'dotenv/config'
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors'
 
 
@@ -31,9 +31,7 @@ app.get("/", (req, res) => {
 });
 
 app.post('/add-destination', async (req, res) => {
-
   const data = req.body
-
   const result = await destinationsCollection.insertOne(data)
 
   res.send({
@@ -41,6 +39,38 @@ app.post('/add-destination', async (req, res) => {
     message: 'Successfully added destination',
     data
   })
+})
+
+app.get('/all-destination', async(req, res)=>{
+  const result = await destinationsCollection.find().toArray()
+  console.log(result);
+  
+  res.send({
+    success: true,
+    message: 'Successfully fetched all destinations',
+    data: result
+  })
+})
+
+app.get('/all-destination/:id', async(req, res)=>{
+  const {id} = req.params 
+
+  const result = await destinationsCollection.findOne({
+    _id: new ObjectId(id)
+  })
+
+  if(result){
+    res.send({
+      success: true,
+      data: result
+    })
+  }
+  else {
+    res.send({
+      success: false,
+      message: 'Destination not found'
+    })
+  }
 })
 
 
