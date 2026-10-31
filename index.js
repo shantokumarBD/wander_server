@@ -21,6 +21,7 @@ export async function connectToMongoDB() {
 const mongoClient = await connectToMongoDB()
 const db = mongoClient.db('wander')
 const destinationsCollection = db.collection('destinations')
+const bookingsCollection = db.collection('bookings')
 
 app.use(cors())
 app.use(express.json())
@@ -37,6 +38,42 @@ app.post('/add-destination', async (req, res) => {
     success: true,
     message: 'Successfully added destination',
     data
+  })
+})
+
+app.post('/booking', async (req, res) => {
+  const data = req.body
+  const result = await bookingsCollection.insertOne(data)
+
+  res.send({
+    success: true,
+    message: 'Successfully added booking',
+    data
+  })
+})
+
+app.get('/my-bookings/:email', async (req,res) =>{
+  const {email} = req.params
+
+  const result = await bookingsCollection.find({
+    email: email
+  }).toArray()
+
+  res.send({
+    success: true,
+    message: 'Successfully fetched bookings',
+    data: result
+  })
+})
+
+app.delete('/my-bookings/:id', async(req, res)=>{
+  const {id} = req.params
+  const result = await bookingsCollection.deleteOne({_id: new ObjectId(id)})
+
+  res.send({
+    success: true,
+    message: 'Successfully deleted booking',
+    data: result
   })
 })
 
