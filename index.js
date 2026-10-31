@@ -3,7 +3,6 @@ import 'dotenv/config'
 import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors'
 
-
 const app = express()
 const PORT = process.env.PORT || 5000
 
@@ -73,10 +72,59 @@ app.get('/all-destination/:id', async(req, res)=>{
   }
 })
 
+app.put('/all-destination/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body };
+    delete updateData._id;
 
+    const result = await destinationsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+
+    res.send({
+      success: true,
+      message: 'Successfully updated destination',
+      result,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.delete('/all-destination/:id', async(req, res)=>{
+  try {
+    const {id} = req.params
+    const result = await destinationsCollection.deleteOne({_id: new ObjectId(id)})
+    
+    if(result){
+      res.send({
+        success: true,
+        message: 'Successfully deleted destination',
+        data: result
+      })
+    }
+    else {
+      res.send({
+        success: false,
+        message: 'Destination not found'
+      })
+    }
+    
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    })
+  }
+
+})
 
 app.listen(PORT, () => {
   connectToMongoDB()
   console.log(`Server is running on port ${PORT}`);
 });
-
