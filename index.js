@@ -27,34 +27,35 @@ const bookingsCollection = db.collection("bookings");
 app.use(cors());
 app.use(express.json());
 
-const varifyApi = async(req, res, next) => {
+const varifyToken = async(req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ message: "Unauthorized" });
   }
   
-  const token = authHeader.split(" ")[1]
+  const token = authHeader.split(" ")[1];
 
-  if(!token){
+  if (!token || token === "undefined") {
     return res.status(401).send({ message: "Unauthorized" });
   }
 
-  const JWKS = createRemoteJWKSet(new URL(process.env.JWKS_URL))
+  const JWKS = createRemoteJWKSet(new URL(process.env.JWKS_URL || "http://localhost:3000/api/auth/jwks"));
   
   try {
-    const { payload } = await jwtVerify(token, JWKS)
-    next()
+    const { payload } = await jwtVerify(token, JWKS);
+    req.user = payload;
+    next();
   } catch (error) {
-    return res.status(500).send({ message: "Server Error" });
+    console.error("JWT verification error:", error.message);
+    return res.status(401).send({ message: "Unauthorized: Invalid token" });
   } 
-
 };
 
 app.get("/", (req, res) => {
   res.send("Wander server is running");
 });
 
-app.post("/add-destination", async (req, res) => {
+app.post("/add-destination",varifyToken, async (req, res) => {
   const data = req.body;
   const result = await destinationsCollection.insertOne(data);
 
@@ -65,7 +66,7 @@ app.post("/add-destination", async (req, res) => {
   });
 });
 
-app.post("/booking", async (req, res) => {
+app.post("/booking",varifyToken, async (req, res) => {
   const data = req.body;
   const result = await bookingsCollection.insertOne(data);
 
@@ -92,7 +93,7 @@ app.get("/my-bookings/:email", async (req, res) => {
   });
 });
 
-app.delete("/my-bookings/:id", async (req, res) => {
+app.delete("/my-bookings/:id" ,varifyToken,async (req, res) => {
   const { id } = req.params;
   const result = await bookingsCollection.deleteOne({ _id: new ObjectId(id) });
 
@@ -103,7 +104,7 @@ app.delete("/my-bookings/:id", async (req, res) => {
   });
 });
 
-app.get("/all-destination", varifyApi, async (req, res) => {
+app.get("/all-destination", varifyToken, async (req, res) => {
   const result = await destinationsCollection.find().toArray();
 
   res.send({
@@ -113,7 +114,7 @@ app.get("/all-destination", varifyApi, async (req, res) => {
   });
 });
 
-app.get("/all-destination/:id", async (req, res) => {
+app.get("/all-destination/:id",varifyToken, async (req, res) => {
   const { id } = req.params;
 
   const result = await destinationsCollection.findOne({
@@ -133,7 +134,7 @@ app.get("/all-destination/:id", async (req, res) => {
   }
 });
 
-app.put("/all-destination/:id", async (req, res) => {
+app.put("/all-destination/:id", varifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
@@ -157,7 +158,7 @@ app.put("/all-destination/:id", async (req, res) => {
   }
 });
 
-app.delete("/all-destination/:id", async (req, res) => {
+app.delete("/all-destination/:id", varifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await destinationsCollection.deleteOne({
