@@ -39,7 +39,7 @@ const varifyToken = async(req, res, next) => {
     return res.status(401).send({ message: "Unauthorized" });
   }
 
-  const JWKS = createRemoteJWKSet(new URL(process.env.JWKS_URL || "http://localhost:3000/api/auth/jwks"));
+  const JWKS = createRemoteJWKSet(new URL(process.env.JWKS_URL  ));
   
   try {
     const { payload } = await jwtVerify(token, JWKS);
@@ -113,6 +113,15 @@ app.get("/all-destination", varifyToken, async (req, res) => {
     data: result,
   });
 });
+
+app.get('/featured-destination', async(req, res)=>{
+  const result= await destinationsCollection.find().limit(5).toArray();
+  res.send({
+    success: true,
+    message: "Successfully fetched featured destinations",
+    data: result,
+  });
+})
 
 app.get("/all-destination/:id",varifyToken, async (req, res) => {
   const { id } = req.params;
@@ -189,3 +198,5 @@ app.listen(PORT, () => {
   connectToMongoDB();
   console.log(`Server is running on port ${PORT}`);
 });
+
+export default app;
