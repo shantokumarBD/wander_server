@@ -104,7 +104,7 @@ app.delete("/my-bookings/:id" ,varifyToken,async (req, res) => {
   });
 });
 
-app.get("/all-destination", varifyToken, async (req, res) => {
+app.get("/all-destination", async (req, res) => {
   const result = await destinationsCollection.find().toArray();
 
   res.send({
@@ -123,7 +123,7 @@ app.get('/featured-destination', async(req, res)=>{
   });
 })
 
-app.get("/all-destination/:id",varifyToken, async (req, res) => {
+app.get("/all-destination/:id", async (req, res) => {
   const { id } = req.params;
 
   const result = await destinationsCollection.findOne({
